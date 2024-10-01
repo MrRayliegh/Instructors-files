@@ -1,0 +1,5 @@
+{% for instructor in results %}
+<div class="suggestion-item" data-id="{{ instructor.id }}">{{ instructor.name }}</div>
+{% empty %}
+<div class="suggestion-item">No suggestions found.</div>
+{% endfor %}

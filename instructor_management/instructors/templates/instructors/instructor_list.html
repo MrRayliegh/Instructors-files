@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructors</title>
+    {% load static %}
+    <!-- Add Bootstrap and custom styles -->
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <style>
+        /* Suggestions box styling */
+        .suggestions-box {
+            border: 1px solid #ccc;
+            background-color: #fff;
+            position: absolute;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header and Navigation (optional) -->
+    <header class="main-header clearfix" role="header">
+        <div class="logo">
+            <a href="http://127.0.0.1:8000/instructors/"><em>Home</em></a>
+        </div>
+    </header>
+
+    <!-- Search and Filter Section -->
+    <div class="container mt-5">
+        <div class="form-group row">
+            <div class="col-md-8">
+                <form method="GET" action="{% url 'instructor_list' %}">
+                    <input type="text" id="search-input" name="q" placeholder="Search for Instructor" class="form-control" autocomplete="off" value="{{ query }}">  <!-- Use the query here -->
+                    <div id="suggestions" class="suggestions-box"></div>  <!-- Suggestions box -->
+                </form>
+            </div>
+            <div class="col-md-2">
+                <select id="filter-select" name="filter" class="form-control" onchange="this.form.submit()">
+                    <option value="ALL" {% if filter == 'ALL' %}selected{% endif %}>ALL</option>
+                    <option value="REGULAR" {% if filter == 'REGULAR' %}selected{% endif %}>REGULAR</option>
+                    <option value="COS" {% if filter == 'COS' %}selected{% endif %}>COS</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Instructor Details -->
+        <div id="instructor-details" class="mt-5"></div> <!-- This is where instructor details will be displayed -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        $(document).ready(function() {
+            // Fetch suggestions as user types
+            $("#search-input").keyup(function() {
+                var query = $(this).val();  // Get the search input value
+                var filter = $('#filter-select').val();  // Get the selected filter
+
+                if (query.length > 1) {  // Only search when input has more than 1 character
+                    $.ajax({
+                        url: "{% url 'instructor_search' %}",
+                        data: {
+                            'q': query,
+                            'filter': filter  // Send the selected filter
+                        },
+                        success: function(data) {
+                            $("#suggestions").html('');  // Clear previous suggestions
+                            if (data.results.length > 0) {
+                                data.results.forEach(function(item) {
+                                    $("#suggestions").append('<div class="suggestion-item" data-id="' + item.id + '">' + item.name + '</div>');
+                                });
+                            } else {
+                                $("#suggestions").append('<div class="suggestion-item">No suggestions found.</div>');
+                            }
+                        }
+                    });
+                } else {
+                    $("#suggestions").empty();  // Clear suggestions if input is too short
+                }
+            });
+
+            // When a suggestion is clicked
+            $(document).on('click', '.suggestion-item', function() {
+                var instructorId = $(this).data('id');
+                $.ajax({
+                    url: "{% url 'instructor_details' %}",
+                    data: {
+                        'id': instructorId
+                    },
+                    success: function(data) {
+                        $("#instructor-details").html(data.html);
+                        $("#suggestions").empty();  // Clear suggestions after selection
+                        $("#search-input").val('');  // Clear search bar after selection
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
